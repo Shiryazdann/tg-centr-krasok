@@ -1,20 +1,29 @@
+print("Starting bot.py imports...")
+
 import os
 import sys
 from collections import defaultdict
 from datetime import datetime, timedelta
+
+print("Loading .env...")
 from dotenv import load_dotenv
+load_dotenv()
+
+print("Importing Telegram libraries...")
 from telegram import Update
 from telegram.ext import Application, MessageHandler, filters, ContextTypes
+
+print("Importing OpenAI...")
 from openai import OpenAI
+
+print("Importing company data...")
 from company_data import COMPANY_INFO
 
-try:
-    from keep_alive import start_health_server_background
-    KEEP_ALIVE_ENABLED = True
-except ImportError:
-    KEEP_ALIVE_ENABLED = False
+print("Importing keep_alive...")
+from keep_alive import start_health_server_background
+KEEP_ALIVE_ENABLED = True
 
-load_dotenv()
+print("All imports successful!")
 
 TELEGRAM_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN')
 GROQ_API_KEY = os.getenv('GROQ_API_KEY')
@@ -94,10 +103,16 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 def main():
     print("=== Starting Telegram Bot ===")
-    print(f"Python version: {os.sys.version}")
+    print(f"Python version: {sys.version}")
+
+    # Запускаем health-check сервер ПЕРВЫМ для Render
+    if KEEP_ALIVE_ENABLED:
+        print("Starting health-check server...")
+        start_health_server_background()
+        print("Health-check server started on port 8080")
+
     print(f"TELEGRAM_TOKEN present: {bool(TELEGRAM_TOKEN)}")
     print(f"GROQ_API_KEY present: {bool(GROQ_API_KEY)}")
-    print(f"Keep-alive enabled: {KEEP_ALIVE_ENABLED}")
 
     if not TELEGRAM_TOKEN:
         print("ОШИБКА: Установите переменную окружения TELEGRAM_BOT_TOKEN")
@@ -106,10 +121,6 @@ def main():
     if not GROQ_API_KEY:
         print("ОШИБКА: Установите переменную окружения GROQ_API_KEY")
         return
-
-    if KEEP_ALIVE_ENABLED:
-        start_health_server_background()
-        print("Keep-alive server started for cloud deployment")
 
     print("Building application...")
     app = Application.builder().token(TELEGRAM_TOKEN).build()
