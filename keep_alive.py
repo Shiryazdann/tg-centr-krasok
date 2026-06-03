@@ -14,7 +14,7 @@ class HealthCheckHandler(BaseHTTPRequestHandler):
 def run_health_server(port=8080):
     """Запускает HTTP сервер для health checks"""
     server = HTTPServer(('0.0.0.0', port), HealthCheckHandler)
-    print(f'Health check server running on port {port}')
+    print(f'Health check server running on port {port}', flush=True)
     server.serve_forever()
 
 def start_health_server_background():

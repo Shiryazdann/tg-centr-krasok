@@ -1,29 +1,36 @@
-print("Starting bot.py imports...")
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
+import sys
+sys.stdout.reconfigure(line_buffering=True)
+sys.stderr.reconfigure(line_buffering=True)
+
+print("Starting bot.py imports...", flush=True)
 
 import os
 import sys
 from collections import defaultdict
 from datetime import datetime, timedelta
 
-print("Loading .env...")
+print("Loading .env...", flush=True)
 from dotenv import load_dotenv
 load_dotenv()
 
-print("Importing Telegram libraries...")
+print("Importing Telegram libraries...", flush=True)
 from telegram import Update
 from telegram.ext import Application, MessageHandler, filters, ContextTypes
 
-print("Importing OpenAI...")
+print("Importing OpenAI...", flush=True)
 from openai import OpenAI
 
-print("Importing company data...")
+print("Importing company data...", flush=True)
 from company_data import COMPANY_INFO
 
-print("Importing keep_alive...")
+print("Importing keep_alive...", flush=True)
 from keep_alive import start_health_server_background
 KEEP_ALIVE_ENABLED = True
 
-print("All imports successful!")
+print("All imports successful!", flush=True)
 
 TELEGRAM_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN')
 GROQ_API_KEY = os.getenv('GROQ_API_KEY')
@@ -102,44 +109,45 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 def main():
-    print("=== Starting Telegram Bot ===")
-    print(f"Python version: {sys.version}")
+    print("=== Starting Telegram Bot ===", flush=True)
+    print(f"Python version: {sys.version}", flush=True)
 
     # Запускаем health-check сервер ПЕРВЫМ для Render
     if KEEP_ALIVE_ENABLED:
-        print("Starting health-check server...")
+        print("Starting health-check server...", flush=True)
         start_health_server_background()
-        print("Health-check server started on port 8080")
+        print("Health-check server started on port 8080", flush=True)
 
-    print(f"TELEGRAM_TOKEN present: {bool(TELEGRAM_TOKEN)}")
-    print(f"GROQ_API_KEY present: {bool(GROQ_API_KEY)}")
+    print(f"TELEGRAM_TOKEN present: {bool(TELEGRAM_TOKEN)}", flush=True)
+    print(f"GROQ_API_KEY present: {bool(GROQ_API_KEY)}", flush=True)
 
     if not TELEGRAM_TOKEN:
-        print("ОШИБКА: Установите переменную окружения TELEGRAM_BOT_TOKEN")
+        print("ОШИБКА: Установите переменную окружения TELEGRAM_BOT_TOKEN", flush=True)
         return
 
     if not GROQ_API_KEY:
-        print("ОШИБКА: Установите переменную окружения GROQ_API_KEY")
+        print("ОШИБКА: Установите переменную окружения GROQ_API_KEY", flush=True)
         return
 
-    print("Building application...")
+    print("Building application...", flush=True)
     app = Application.builder().token(TELEGRAM_TOKEN).build()
 
-    print("Adding handlers...")
+    print("Adding handlers...", flush=True)
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
 
-    print("Bot zapuschen i gotov k rabote!")
-    print("Nazhmite Ctrl+C dlya ostanovki")
+    print("Bot zapuschen i gotov k rabote!", flush=True)
+    print("Nazhmite Ctrl+C dlya ostanovki", flush=True)
 
-    print("Starting polling...")
+    print("Starting polling...", flush=True)
     app.run_polling(allowed_updates=Update.ALL_TYPES)
 
 
 if __name__ == '__main__':
     try:
+        print("=== __main__ started ===", flush=True)
         main()
     except Exception as e:
-        print(f"CRITICAL ERROR: {e}")
+        print(f"CRITICAL ERROR: {e}", flush=True)
         import traceback
         traceback.print_exc()
         sys.exit(1)
