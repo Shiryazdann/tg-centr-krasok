@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import sys
+import asyncio
 sys.stdout.reconfigure(line_buffering=True)
 sys.stderr.reconfigure(line_buffering=True)
 
@@ -111,6 +112,14 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 def main():
     print("=== Starting Telegram Bot ===", flush=True)
     print(f"Python version: {sys.version}", flush=True)
+
+    # Создаём event loop для Python 3.14+
+    try:
+        loop = asyncio.get_event_loop()
+    except RuntimeError:
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        print("Created new event loop", flush=True)
 
     # Запускаем health-check сервер ПЕРВЫМ для Render
     if KEEP_ALIVE_ENABLED:
