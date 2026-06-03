@@ -1,4 +1,5 @@
 import os
+import sys
 from collections import defaultdict
 from datetime import datetime, timedelta
 from dotenv import load_dotenv
@@ -92,6 +93,12 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 def main():
+    print("=== Starting Telegram Bot ===")
+    print(f"Python version: {os.sys.version}")
+    print(f"TELEGRAM_TOKEN present: {bool(TELEGRAM_TOKEN)}")
+    print(f"GROQ_API_KEY present: {bool(GROQ_API_KEY)}")
+    print(f"Keep-alive enabled: {KEEP_ALIVE_ENABLED}")
+
     if not TELEGRAM_TOKEN:
         print("ОШИБКА: Установите переменную окружения TELEGRAM_BOT_TOKEN")
         return
@@ -104,15 +111,24 @@ def main():
         start_health_server_background()
         print("Keep-alive server started for cloud deployment")
 
+    print("Building application...")
     app = Application.builder().token(TELEGRAM_TOKEN).build()
 
+    print("Adding handlers...")
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
 
     print("Bot zapuschen i gotov k rabote!")
     print("Nazhmite Ctrl+C dlya ostanovki")
 
+    print("Starting polling...")
     app.run_polling(allowed_updates=Update.ALL_TYPES)
 
 
 if __name__ == '__main__':
-    main()
+    try:
+        main()
+    except Exception as e:
+        print(f"CRITICAL ERROR: {e}")
+        import traceback
+        traceback.print_exc()
+        sys.exit(1)
