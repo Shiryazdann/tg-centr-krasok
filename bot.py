@@ -1,37 +1,19 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import sys
-import asyncio
-sys.stdout.reconfigure(line_buffering=True)
-sys.stderr.reconfigure(line_buffering=True)
-
-print("Starting bot.py imports...", flush=True)
-
 import os
 import sys
+import asyncio
 from collections import defaultdict
 from datetime import datetime, timedelta
-
-print("Loading .env...", flush=True)
 from dotenv import load_dotenv
-load_dotenv()
-
-print("Importing Telegram libraries...", flush=True)
 from telegram import Update
 from telegram.ext import Application, MessageHandler, filters, ContextTypes
-
-print("Importing OpenAI...", flush=True)
 from openai import OpenAI
-
-print("Importing company data...", flush=True)
 from company_data import COMPANY_INFO
-
-print("Importing keep_alive...", flush=True)
 from keep_alive import start_health_server_background
-KEEP_ALIVE_ENABLED = True
 
-print("All imports successful!", flush=True)
+load_dotenv()
 
 TELEGRAM_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN')
 GROQ_API_KEY = os.getenv('GROQ_API_KEY')
@@ -42,8 +24,7 @@ client = OpenAI(
 )
 
 user_conversations = defaultdict(lambda: {"messages": [], "last_activity": datetime.now()})
-
-MAX_HISTORY = 6  
+MAX_HISTORY = 6
 
 SYSTEM_PROMPT = f"""Ты - вежливый и профессиональный AI-ассистент компании "Центр Красок #1".
 
@@ -64,7 +45,6 @@ SYSTEM_PROMPT = f"""Ты - вежливый и профессиональный 
 
 
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Обработка входящих сообщений с памятью диалога"""
     user_message = update.message.text
     user_id = update.effective_user.id
 
@@ -76,13 +56,9 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             user_conversations[user_id]["messages"] = []
 
         user_conversations[user_id]["last_activity"] = current_time
-
-        user_conversations[user_id]["messages"].append(
-            {"role": "user", "content": user_message}
-        )
+        user_conversations[user_id]["messages"].append({"role": "user", "content": user_message})
 
         history = user_conversations[user_id]["messages"][-MAX_HISTORY:]
-
         messages = [{"role": "system", "content": SYSTEM_PROMPT}] + history
 
         response = client.chat.completions.create(
@@ -93,10 +69,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
 
         bot_reply = response.choices[0].message.content
-
-        user_conversations[user_id]["messages"].append(
-            {"role": "assistant", "content": bot_reply}
-        )
+        user_conversations[user_id]["messages"].append({"role": "assistant", "content": bot_reply})
 
         await update.message.reply_text(bot_reply)
 
@@ -106,57 +79,28 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             "Пожалуйста, попробуйте позже или свяжитесь с нами по телефону: +7 (777) 292-84-01"
         )
         await update.message.reply_text(error_message)
-        print(f"Ошибка: {e}")
+        print(f"Error: {e}")
 
 
 def main():
-    print("=== Starting Telegram Bot ===", flush=True)
-    print(f"Python version: {sys.version}", flush=True)
-
-    # Создаём event loop для Python 3.14+
     try:
         loop = asyncio.get_event_loop()
     except RuntimeError:
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
-        print("Created new event loop", flush=True)
 
-    # Запускаем health-check сервер ПЕРВЫМ для Render
-    if KEEP_ALIVE_ENABLED:
-        print("Starting health-check server...", flush=True)
-        start_health_server_background()
-        print("Health-check server started on port 8080", flush=True)
+    start_health_server_background()
 
-    print(f"TELEGRAM_TOKEN present: {bool(TELEGRAM_TOKEN)}", flush=True)
-    print(f"GROQ_API_KEY present: {bool(GROQ_API_KEY)}", flush=True)
-
-    if not TELEGRAM_TOKEN:
-        print("ОШИБКА: Установите переменную окружения TELEGRAM_BOT_TOKEN", flush=True)
+    if not TELEGRAM_TOKEN or not GROQ_API_KEY:
+        print("ERROR: Missing environment variables")
         return
 
-    if not GROQ_API_KEY:
-        print("ОШИБКА: Установите переменную окружения GROQ_API_KEY", flush=True)
-        return
-
-    print("Building application...", flush=True)
     app = Application.builder().token(TELEGRAM_TOKEN).build()
-
-    print("Adding handlers...", flush=True)
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
 
-    print("Bot zapuschen i gotov k rabote!", flush=True)
-    print("Nazhmite Ctrl+C dlya ostanovki", flush=True)
-
-    print("Starting polling...", flush=True)
+    print("Bot is running...")
     app.run_polling(allowed_updates=Update.ALL_TYPES)
 
 
 if __name__ == '__main__':
-    try:
-        print("=== __main__ started ===", flush=True)
-        main()
-    except Exception as e:
-        print(f"CRITICAL ERROR: {e}", flush=True)
-        import traceback
-        traceback.print_exc()
-        sys.exit(1)
+    main()
